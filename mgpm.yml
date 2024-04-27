@@ -1,0 +1,5 @@
+repositories:
+  -
+    type: git
+    name: example
+    url: https://github.com/cli/cli.git
