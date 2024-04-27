@@ -1,0 +1,5 @@
+Manifest-Version: 1.0
+Implementation-Title: mgpm
+Implementation-Version: LATEST
+Main-Class: io.bit3.mgpm.App
+
