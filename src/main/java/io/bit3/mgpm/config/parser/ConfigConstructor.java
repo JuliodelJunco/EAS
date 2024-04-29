@@ -45,10 +45,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+public class CustomException extends RuntimeException {
+  public MyParseException(String message) {
+    super(message);
+  }
+}
 
 public class ConfigConstructor extends Constructor {
   private final Config config;
-
+  private static final String GITHUB = "github";
+  private static final String REPOERROR = "repsitories[%d].path must be a string";
   public ConfigConstructor(Config config) {
     this.config = config;
 
@@ -61,11 +67,11 @@ public class ConfigConstructor extends Constructor {
       Map<Object, Object> map = castConfigRootValue(node);
 
       // git
-      Map<String, Object> gitConfig = castGitConfigValue(map.get("github"));
+      Map<String, Object> gitConfig = castGitConfigValue(map.get(GITHUB));
       configureGit(config, gitConfig);
 
       // github
-      Map<String, Object> githubConfig = castGithubConfigValue(map.get("github"));
+      Map<String, Object> githubConfig = castGithubConfigValue(map.get(GITHUB));
       configureGithub(config, githubConfig);
 
       // repositories
@@ -106,7 +112,7 @@ public class ConfigConstructor extends Constructor {
         return;
       }
 
-      if ("github".equals(type)) {
+      if (GITHUB.equals(type)) {
         configureGithubRepositories(config, repositoryIndex, map);
         return;
       }
@@ -185,7 +191,7 @@ public class ConfigConstructor extends Constructor {
           config.getRepositories().add(repositoryConfig);
         }
       } catch (IOException e) {
-        throw new RuntimeException(e);
+        throw new CustomException("Error with the input",e);
       }
     }
 
@@ -239,7 +245,7 @@ public class ConfigConstructor extends Constructor {
             .filter(r -> pattern.matcher(r.getName()).matches())
             .collect(Collectors.toList());
       } catch (IOException e) {
-        throw new RuntimeException(e);
+        throw new CustomException("Error with the input",e);
       }
     }
 
@@ -269,7 +275,8 @@ public class ConfigConstructor extends Constructor {
 
         String projectName = project.getName();
         String url = project.getSshUrl();
-        String projectPathFragment = project.getPathWithNamespace().replaceFirst("^" + Pattern.quote(namespace) + "/", "");
+        String separator = java.io.File.separator;
+        String projectPathFragment = project.getPathWithNamespace().replaceFirst("^" + Pattern.quote(namespace) + separator, ""); /*hard coded delimiter*/
         File projectDirectory = parentDirPath.resolve(projectPathFragment).toFile();
         RepositoryConfig repositoryConfig = new RepositoryConfig(
             path,
@@ -283,7 +290,7 @@ public class ConfigConstructor extends Constructor {
       }
     }
 
-    private List<GitlabProject> fetchGitlabProjects(Config config, String hostUrl, String token,
+    private List<GitlabProject> fetchGitlabProjects(String hostUrl, String token,
                                                     String namespace, String projectPattern) {
       try {
 
@@ -296,7 +303,7 @@ public class ConfigConstructor extends Constructor {
             .filter(gitlabProject -> pattern.matcher(gitlabProject.getPathWithNamespace()).matches())
             .collect(Collectors.toList());
       } catch (IOException e) {
-        throw new RuntimeException(e);
+        throw new CustomException("Error with the input",e);
       }
     }
 
@@ -393,7 +400,7 @@ public class ConfigConstructor extends Constructor {
         object = "";
       }
 
-      assertIsString(object, "repsitories[%d].path must be a string", repositoryIndex);
+      assertIsString(object, REPOERROR, repositoryIndex);
 
       return (String) object;
     }
@@ -447,13 +454,7 @@ public class ConfigConstructor extends Constructor {
     }
 
     private String castCgitPathValue(Object object, int repositoryIndex) {
-      if (null == object) {
-        object = "";
-      }
-
-      assertIsString(object, "repsitories[%d].path must be a string", repositoryIndex);
-
-      return (String) object;
+      return castRepositoryPathValue(object, repositoryIndex);
     }
 
     private String castGithubRepositoryOwnerValue(Object object, int repositoryIndex) {
@@ -474,13 +475,8 @@ public class ConfigConstructor extends Constructor {
     }
 
     private String castGithubPathValue(Object object, int repositoryIndex) {
-      if (null == object) {
-        object = "";
-      }
 
-      assertIsString(object, "repsitories[%d].path must be a string", repositoryIndex);
-
-      return (String) object;
+      return castRepositoryPathValue(object, repositoryIndex);
     }
 
     private String castGitlabRepositoryHostUrlValue(Object object, int repositoryIndex) {
@@ -525,13 +521,8 @@ public class ConfigConstructor extends Constructor {
     }
 
     private String castGitlabPathValue(Object object, int repositoryIndex) {
-      if (null == object) {
-        object = "";
-      }
 
-      assertIsString(object, "repsitories[%d].path must be a string", repositoryIndex);
-
-      return (String) object;
+      return castRepositoryPathValue(object, repositoryIndex);
     }
   }
 }
