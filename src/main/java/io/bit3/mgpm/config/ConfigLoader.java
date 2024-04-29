@@ -9,10 +9,17 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 
+public class FileErrorException extends RuntimeException {
+  public MyParseException(String message) {
+    super(message);
+  }
+}
+
+
+
 public class ConfigLoader {
   public void load(Config config) throws FileNotFoundException {
-    File file = new File(new File("mgpm.yml").getAbsolutePath());
-    load(config,file);
+    load(config, new File("mgpm.yml"));
   }
 
   public void load(Config config, File file) throws FileNotFoundException {
@@ -38,7 +45,7 @@ public class ConfigLoader {
     try {
       yamlParser.load(new FileReader(file));
     } catch (FileNotFoundException e) {
-      throw new RuntimeException(e);
+      throw new FileErrorException("There's been an error with the existence of the file",e); /*cambios de error*/
     }
   }
 }
