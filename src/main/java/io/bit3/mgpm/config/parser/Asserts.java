@@ -8,6 +8,12 @@ import java.util.Map;
 import java.util.Objects;
 
 public class Asserts {
+
+  private Asserts(){
+    /*private constructor*/
+  }
+
+
   public static void assertNotNull(Object object, String message, Object... arguments) {
     if (null == object) {
       throw new InvalidConfigException(
