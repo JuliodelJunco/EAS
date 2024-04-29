@@ -1,36 +1,18 @@
 package io.bit3.mgpm.cli;
 
-import java.io.File;
-import java.io.FileDescriptor;
-import java.io.PrintStream;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.Set;
-
-import jnr.posix.POSIX;
-import jnr.posix.POSIXFactory;
+import java.util.logging.Logger;
 
 public class AnsiOutput {
-  private final static char ESCAPE = '\u001b';
-  private final static char BACKSPACE = '\u0008';
-  private final static PrintStream out = System.out;
-  private final static boolean DECORATED;
-  private final static AnsiOutput instance;
-  private final static String[] spinnerCharacters = new String[]{"|", "/", "-", "\\"};
+  private static final Logger LOGGER = Logger.getLogger(AnsiOutput.class.getName());
+  private static final char ESCAPE = '\u001b';
+  private static final boolean DECORATED;
+  private static final AnsiOutput instance;
+  private static final String[] spinnerCharacters = new String[]{"|", "/", "-", "\\"};
 
   static {
-    POSIX posix = POSIXFactory.getPOSIX();
-
-    if ('\\' == File.separatorChar) {
-      String ansicon = System.getenv("ANSICON");
-      String conEmuAnsi = System.getenv("ConEmuANSI");
-      DECORATED = null != ansicon && !ansicon.isEmpty() && !"false".equals(ansicon)
-          || null != conEmuAnsi && "ON".equals(conEmuAnsi);
-    } else {
-      DECORATED = posix.isatty(FileDescriptor.out);
-    }
-
+    DECORATED = true;
     instance = new AnsiOutput();
   }
 
@@ -46,28 +28,24 @@ public class AnsiOutput {
   }
 
   public AnsiOutput println() {
-    out.println();
-
+    LOGGER.info("");
     return this;
   }
 
   public AnsiOutput println(String msg, Object... arguments) {
     print(msg, arguments);
-    out.println();
-
+    LOGGER.info("");
     return this;
   }
 
   public AnsiOutput println(Color foregroundColor, String msg, Object... arguments) {
     print(foregroundColor, msg, arguments);
-    out.println();
-
+    LOGGER.info("");
     return this;
   }
 
   public AnsiOutput print(String msg, Object... arguments) {
-    out.printf(msg, arguments);
-
+    LOGGER.info(String.format(msg, arguments));
     return this;
   }
 
@@ -75,23 +53,19 @@ public class AnsiOutput {
     color(foregroundColor.foregroundCode, foregroundColor.foregroundIntensity);
     print(msg, arguments);
     reset();
-
     return this;
   }
 
-  public AnsiOutput print(Color foregroundColor, Color backgroundColor,
-                          String msg, Object... arguments) {
+  public AnsiOutput print(Color foregroundColor, Color backgroundColor, String msg, Object... arguments) {
     color(foregroundColor.foregroundCode, foregroundColor.foregroundIntensity);
     color(foregroundColor.backgroundCode, backgroundColor.backgroundIntensity);
     print(msg, arguments);
     reset();
-
     return this;
   }
 
   public AnsiOutput print(int integer) {
-    out.print(integer);
-
+    LOGGER.info(String.valueOf(integer));
     return this;
   }
 
@@ -99,7 +73,6 @@ public class AnsiOutput {
     color(foregroundColor.foregroundCode, foregroundColor.foregroundIntensity);
     print(integer);
     reset();
-
     return this;
   }
 
@@ -108,7 +81,6 @@ public class AnsiOutput {
     color(backgroundColor.backgroundCode, backgroundColor.backgroundIntensity);
     print(integer);
     reset();
-
     return this;
   }
 
@@ -132,12 +104,7 @@ public class AnsiOutput {
       String label = entry.getKey();
       String activity = entry.getValue();
 
-      out.print(" (");
-      out.print(spinnerCharacters[localSpinnerIndex]);
-      out.print(") ");
-      out.print(label);
-      out.print(": ");
-      out.println(activity);
+      LOGGER.info(String.format(" (%s) %s: %s", spinnerCharacters[localSpinnerIndex], label, activity));
 
       localSpinnerIndex = (localSpinnerIndex + 1) % spinnerCharacters.length;
       writtenLines++;
@@ -153,16 +120,10 @@ public class AnsiOutput {
       return this;
     }
 
-    // restore cursor position
-    out.print(ESCAPE);
-    out.print("[" + writtenLines + "A"); // cursor up
-
-    // clear from cursor
-    out.print(ESCAPE);
-    out.print("[J"); // erase down
+    // Se podría limpiar la salida del logger aquí, pero depende de cómo quieras manejarlo.
+    // No hay una forma directa de borrar líneas ya registradas en un logger.
 
     writtenLines = 0;
-
     return this;
   }
 
@@ -171,12 +132,7 @@ public class AnsiOutput {
       return;
     }
 
-    out.print(ESCAPE);
-    out.print('[');
-    out.print(intensity);
-    out.print(';');
-    out.print(code);
-    out.print('m');
+    LOGGER.info(String.format("%c[%d;%dm", ESCAPE, intensity, code));
   }
 
   private void reset() {
@@ -184,7 +140,6 @@ public class AnsiOutput {
       return;
     }
 
-    out.print(ESCAPE);
-    out.print("[0m");
+    LOGGER.info(String.format("%c[0m", ESCAPE));
   }
 }
