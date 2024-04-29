@@ -8,10 +8,8 @@ import io.bit3.mgpm.cmd.LogLevel;
 import io.bit3.mgpm.config.Config;
 import io.bit3.mgpm.config.ConfigLoader;
 import io.bit3.mgpm.gui.GuiApplication;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.io.FileNotFoundException;
 
 public class App {
@@ -50,7 +48,9 @@ public class App {
         app.runCli();
       }
     } catch (FileNotFoundException e) {
-      System.err.println(e.getMessage());
+      logger.error(e.getMessage()); // Utilizando el Logger para errores de archivo no encontrado
+    } catch (InterruptedException e) {
+      logger.error(e.getMessage(), e); // Utilizando el Logger para excepciones generales
     }
   }
 
@@ -77,7 +77,7 @@ public class App {
     guiApplication.run();
   }
 
-  public void runCli() {
+  public void runCli() throws InterruptedException {
     CliApplication cliApplication = new CliApplication(args, config);
     cliApplication.run();
   }
@@ -98,7 +98,7 @@ public class App {
         try {
           Thread.sleep(200);
         } catch (InterruptedException e) {
-          logger.error(e.getMessage(), e);
+          logger.error(e.getMessage(), e); // Utilizando el Logger para excepciones en el hilo del spinner
         }
       }
     }
@@ -110,7 +110,7 @@ public class App {
         try {
           Thread.sleep(50);
         } catch (InterruptedException e) {
-          logger.error(e.getMessage(), e);
+          logger.error(e.getMessage(), e); // Utilizando el Logger para excepciones en la finalización del hilo del spinner
         }
       }
 
