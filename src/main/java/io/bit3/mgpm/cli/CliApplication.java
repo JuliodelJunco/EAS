@@ -40,7 +40,7 @@ public class CliApplication {
     this.output = AnsiOutput.getInstance();
   }
 
-  public void run() {
+  public void run() throws InterruptedException {
     List<File> knownDirectories = new LinkedList<>();
 
     ExecutorService executor = Executors.newFixedThreadPool(args.getThreads());
@@ -60,11 +60,7 @@ public class CliApplication {
         output.rotateSpinner();
       }
 
-      try {
         Thread.sleep(200);
-      } catch (InterruptedException e) {
-        break;
-      }
     }
 
     output.deleteSpinner();
@@ -124,8 +120,8 @@ public class CliApplication {
       try {
         List<String> localBranchNames = worker.getLocalBranchNames();
         Map<String, List<String>> remoteBranchNames = worker.getRemoteBranchNames();
-
-        if (localBranchNames.isEmpty() && (!args.isShowStatus() || remoteBranchNames.isEmpty())) {
+        boolean valid = localBranchNames.isEmpty() && (!args.isShowStatus() || remoteBranchNames.isEmpty());
+        if (valid) {
           return;
         }
 
@@ -180,7 +176,7 @@ public class CliApplication {
             }
 
             printBranchName(pattern, branchName, headSymbolicRef);
-            printBranchUpstream(remoteBranchNames, upstream);
+            printBranchUpstream(upstream);
             printBranchUpdate(branchName, update, branchUpdateIsh);
             printBranchStats(stats);
 
@@ -211,7 +207,7 @@ public class CliApplication {
       output.print(pattern, branchName);
     }
 
-    private void printBranchUpstream(Map<String, List<String>> remoteBranchNames, Upstream upstream) {
+    private void printBranchUpstream(Upstream upstream) {
       if (null != upstream) {
         output.print(Color.DARK_GRAY, " → %s", upstream.getRemoteRef());
       }
@@ -240,22 +236,21 @@ public class CliApplication {
             .print(" ")
             .print(color, update.toString().toLowerCase().replace('_', ' '));
 
-        switch (update) {
-          case MERGED_FAST_FORWARD:
-          case REBASED:
-            FromToIsh fromToIsh = branchUpdateIsh.get(branchName);
-            output
-                .print(" ")
-                .print(fromToIsh.getFrom().substring(0, 8))
-                .print("..")
-                .print(fromToIsh.getTo().substring(0, 8));
+        if (update.equals(Update.REBASED)) {
+          FromToIsh fromToIsh = branchUpdateIsh.get(branchName);
+          output
+              .print(" ")
+              .print(fromToIsh.getFrom().substring(0, 8))
+              .print("..")
+              .print(fromToIsh.getTo().substring(0, 8));
         }
       }
     }
 
     private void printBranchStats(Worker.Stats stats) {
       if (null != stats) {
-        if (0 == stats.getCommitsBehind() && 0 == stats.getCommitsAhead() && stats.isClean()) {
+        boolean valid= 0 == stats.getCommitsBehind() && 0 == stats.getCommitsAhead() && stats.isClean();
+        if (valid) {
           output.print(Color.GREEN, "  ✔");
         }
 
