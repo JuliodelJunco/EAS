@@ -5,11 +5,21 @@ import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import java.util.logging.Logger;
 
 import java.io.File;
 
+public class CParsingException extends RuntimeException {
+  public MyParseException(String message) {
+    super(message);
+  }
+}
+
+
 public class ArgsLoader {
   private final OptionsFactory optionsFactory;
+
+  private static final Logger logger = Logger.getLogger(ArgsLoader.class.getName());
 
   public ArgsLoader() {
     this(new OptionsFactory());
@@ -17,6 +27,26 @@ public class ArgsLoader {
 
   public ArgsLoader(OptionsFactory optionsFactory) {
     this.optionsFactory = optionsFactory;
+  }
+
+  public void valueMissmatch(String value) {
+    if (!value.matches("\\d*[1-9]\\d*")) {
+      logger.severe("Option --threads must be a positive number, skipping.");
+    }
+    else {
+      args.setThreads(Integer.parseInt(value));
+    }
+  }
+  public void optionLoggerMode (CommandLine cmd){
+    if (cmd.hasOption(OptionsFactory.VERY_VERBOSE_OPT)) {
+      args.setLoggerLevel(LogLevel.DEBUG);
+    } else if (cmd.hasOption(OptionsFactory.VERBOSE_OPT)) {
+      args.setLoggerLevel(LogLevel.INFO);
+    } else if (cmd.hasOption(OptionsFactory.QUIET_OPT)) {
+      args.setLoggerLevel(LogLevel.ERROR);
+    } else {
+      args.setLoggerLevel(LogLevel.WARN);
+    }
   }
 
   public Args load(String[] cliArguments) {
@@ -55,11 +85,7 @@ public class ArgsLoader {
 
       if (cmd.hasOption(OptionsFactory.THREADS_OPT)) {
         String value = cmd.getOptionValue(OptionsFactory.THREADS_OPT);
-        if (!value.matches("\\d*[1-9]\\d*")) {
-          System.err.println("Option --threads must be a positive number, skipping.");
-        } else {
-          args.setThreads(Integer.parseInt(value));
-        }
+        valueMissmatch(value)  /*pedia usar logger*/
       }
 
       if (cmd.hasOption(OptionsFactory.NO_THREADS_OPT)) {
@@ -70,19 +96,13 @@ public class ArgsLoader {
         args.setShowGui(true);
       }
 
-      if (cmd.hasOption(OptionsFactory.VERY_VERBOSE_OPT)) {
-        args.setLoggerLevel(LogLevel.DEBUG);
-      } else if (cmd.hasOption(OptionsFactory.VERBOSE_OPT)) {
-        args.setLoggerLevel(LogLevel.INFO);
-      } else if (cmd.hasOption(OptionsFactory.QUIET_OPT)) {
-        args.setLoggerLevel(LogLevel.ERROR);
-      } else {
-        args.setLoggerLevel(LogLevel.WARN);
-      }
+      optionLoggerMode(cmd);
+
+
 
       return args;
     } catch (ParseException e) {
-      throw new RuntimeException(e);
+      throw new CParsingException("Error parsing the input",e); /*Cambios de nueva excepcion*/
     }
   }
 }
