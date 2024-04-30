@@ -1,10 +1,8 @@
 package io.bit3.mgpm.cli;
 
 import org.slf4j.LoggerFactory;
-
 import java.util.LinkedHashMap;
 import java.util.Map;
-import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
 
@@ -140,7 +138,7 @@ public class AnsiOutput {
     if (!DECORATED) {
       return;
     }
-    else {
+    else if(LOGGER.isInfoEnabled()){
     LOGGER.info(String.format("%c[%d;%dm", ESCAPE, intensity, code));
     }
   }
@@ -149,7 +147,7 @@ public class AnsiOutput {
     if (!DECORATED) {
       return;
     }
-    else {
+    else if(LOGGER.isInfoEnabled()){
       LOGGER.info(String.format("%c[0m", ESCAPE));
     }
   }
