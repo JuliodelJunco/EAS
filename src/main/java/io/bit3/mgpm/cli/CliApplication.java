@@ -135,7 +135,7 @@ public class CliApplication {
 
         int padding = localBranchNames.stream().mapToInt(String::length).max().orElseGet(() -> 1);
         String pattern = "%-" + padding + "s";
-        boolean printDetails = true;
+
 
 
 
@@ -271,7 +271,7 @@ public class CliApplication {
       }
     }
 
-    private void printRemoteBranches(String pattern, Map<String, List<String>> remoteBranchNames, Map<String, List<String>> addedRemoteBranchNames, Map<String, List<String>> deletedRemoteBranchNames, Map<String, List<String>> remoteBranchesUsedAsUpstream) {
+    private void printRemoteBranches( Map<String, List<String>> remoteBranchNames, Map<String, List<String>> addedRemoteBranchNames, Map<String, List<String>> deletedRemoteBranchNames, Map<String) {
       for (Map.Entry<String, List<String>> entry : remoteBranchNames.entrySet()) {
         String remoteName = entry.getKey();
         List<String> currentBranchNames = entry.getValue();
@@ -286,15 +286,15 @@ public class CliApplication {
         if (null != deletedBranchNames) {
           remoteBranches.addAll(deletedBranchNames);
         }
-
+        remoteBranchLocator(remoteBranches);
 
       }
     }
     private boolean printDetails(Map<String, List<String>> added,Map<String, List<String>> deleted,Map<String, Worker.Stats> stats ){
-     boolean details = !added.isEmpty()
-            || !deleted.isEmpty()
-            || !stats.values().stream().map(Worker.Stats::isEmpty).reduce(true, (a, b) -> a && b);
-      return details;
+
+      return !added.isEmpty()
+              || !deleted.isEmpty()
+              || !stats.values().stream().map(Worker.Stats::isEmpty).reduce(true, (a, b) -> a && b);
     }
     private void remoteBranchLocator(Set<String> remoteBranches){
       for (String remoteBranch : remoteBranches) {
