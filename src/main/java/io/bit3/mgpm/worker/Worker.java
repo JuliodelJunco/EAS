@@ -112,7 +112,7 @@ public class Worker implements Runnable {
     return succeed;
   }
   public static final String LOCAL = "--local";
-  public static final String CONFIG = "config";
+  public static final String CONFIG_STRING = "config";
   public static final String GET = "--get";
   public static final String SUBMODULE = "submodule";
   public static final String REV_PARSE = "rev-parse";
@@ -161,7 +161,7 @@ public class Worker implements Runnable {
       }
 
       if (new File(directory, ".git").isDirectory()) {
-        String actualUrl = git(CONFIG, LOCAL, GET, "remote.origin.url");
+        String actualUrl = git(CONFIG_STRING, LOCAL, GET, "remote.origin.url");
         String expectedUrl = repositoryConfig.getUrl();
 
         if (!expectedUrl.equals(actualUrl)) {
@@ -308,23 +308,23 @@ public class Worker implements Runnable {
       String rebase = null;
 
       try {
-        remoteName = git(CONFIG, LOCAL, GET, String.format("branch.%s.remote", branchName));
+        remoteName = git(CONFIG_STRING, LOCAL, GET, String.format("branch.%s.remote", branchName));
       } catch (GitProcessException e) {
         // exception means, there is no remote configured
       }
 
       try {
-        remoteRef = git(CONFIG, LOCAL, GET, String.format("branch.%s.merge", branchName));
+        remoteRef = git(CONFIG_STRING, LOCAL, GET, String.format("branch.%s.merge", branchName));
       } catch (GitProcessException e) {
         // exception means, there is no remote configured
       }
 
       try {
-        rebase = git(CONFIG, LOCAL, GET, String.format("branch.%s.rebase", branchName)).toLowerCase();
+        rebase = git(CONFIG_STRING, LOCAL, GET, String.format("branch.%s.rebase", branchName)).toLowerCase();
 
         if (StringUtils.isBlank(rebase)) {
           // not defined for this branch, use global setting instead
-          rebase = git(CONFIG, GET, "pull.rebase");
+          rebase = git(CONFIG_STRING, GET, "pull.rebase");
         }
       } catch (GitProcessException e) {
         // exception means, there is no remote configured
