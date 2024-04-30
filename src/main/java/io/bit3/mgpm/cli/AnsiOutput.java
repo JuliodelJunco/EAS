@@ -11,12 +11,11 @@ public class AnsiOutput {
   private static final Logger LOGGER = LoggerFactory.getLogger(AnsiOutput.class);
   private static final char ESCAPE = '\u001b';
   private static final boolean DECORATED;
-  private static final AnsiOutput instance;
+  private static final AnsiOutput instance = new AnsiOutput();
   private static final String[] spinnerCharacters = new String[]{"|", "/", "-", "\\"};
 
   static {
     DECORATED = true;
-    instance = new AnsiOutput();
   }
 
   private Map<String, String> activeWorkers = new LinkedHashMap<>();
