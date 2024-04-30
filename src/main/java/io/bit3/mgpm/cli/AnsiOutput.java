@@ -44,8 +44,10 @@ public class AnsiOutput {
     return this;
   }
 
-  public AnsiOutput print(String msg, Object... arguments) {
-    LOGGER.info(String.format(msg, arguments));
+  public AnsiOutput print(String msg,Object... arguments) {
+    if (LOGGER.isInfoEnabled()){
+      LOGGER.info(String.format(msg, arguments));
+    }
     return this;
   }
 
@@ -65,7 +67,9 @@ public class AnsiOutput {
   }
 
   public AnsiOutput print(int integer) {
-    LOGGER.info(String.valueOf(integer));
+    if(LOGGER.isInfoEnabled()){
+      LOGGER.info(String.valueOf(integer));
+    }
     return this;
   }
 
@@ -103,9 +107,9 @@ public class AnsiOutput {
     for (Map.Entry<String, String> entry : activeWorkers.entrySet()) {
       String label = entry.getKey();
       String activity = entry.getValue();
-
-      LOGGER.info(String.format(" (%s) %s: %s", spinnerCharacters[localSpinnerIndex], label, activity));
-
+      if(LOGGER.isInfoEnabled()){
+        LOGGER.info(String.format(" (%s) %s: %s", spinnerCharacters[localSpinnerIndex], label, activity));
+      }
       localSpinnerIndex = (localSpinnerIndex + 1) % spinnerCharacters.length;
       writtenLines++;
     }
@@ -131,15 +135,17 @@ public class AnsiOutput {
     if (!DECORATED) {
       return;
     }
-
+    else {
     LOGGER.info(String.format("%c[%d;%dm", ESCAPE, intensity, code));
+    }
   }
 
   private void reset() {
     if (!DECORATED) {
       return;
     }
-
-    LOGGER.info(String.format("%c[0m", ESCAPE));
+    else {
+      LOGGER.info(String.format("%c[0m", ESCAPE));
+    }
   }
 }

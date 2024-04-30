@@ -137,17 +137,15 @@ public class CliApplication {
         String pattern = "%-" + padding + "s";
         boolean printDetails = true;
 
-        if (!logger.isInfoEnabled()) {
-          printDetails = !addedRemoteBranchNames.isEmpty()
-                  || !deletedRemoteBranchNames.isEmpty()
-                  || !branchStats.values().stream().map(Worker.Stats::isEmpty).reduce(true, (a, b) -> a && b);
-        } else if (!logger.isWarnEnabled()) {
+
+
+        if (!logger.isWarnEnabled()) {
           // be quiet
           return;
         }
 
         synchronized (output) {
-          if (!printDetails) {
+          if (!printDetails(addedRemoteBranchNames, deletedRemoteBranchNames, branchStats)) {
             return;
           }
 
@@ -268,31 +266,8 @@ public class CliApplication {
           output.print(Color.RED, "  +");
           output.print(Color.RED, stats.getAdded());
         }
+        extraChecks(stats);
 
-        if (stats.getModified() > 0) {
-          output.print(Color.YELLOW, "  ★");
-          output.print(Color.YELLOW, stats.getModified());
-        }
-
-        if (stats.getRenamed() > 0) {
-          output.print(Color.MAGENTA, "  ⇄");
-          output.print(Color.MAGENTA, stats.getRenamed());
-        }
-
-        if (stats.getCopied() > 0) {
-          output.print(Color.MAGENTA, "  ↷");
-          output.print(Color.MAGENTA, stats.getCopied());
-        }
-
-        if (stats.getDeleted() > 0) {
-          output.print(Color.MAGENTA, "  -");
-          output.print(Color.MAGENTA, stats.getDeleted());
-        }
-
-        if (stats.getUnmerged() > 0) {
-          output.print(Color.RED, "  ☠");
-          output.print(Color.RED, stats.getUnmerged());
-        }
       }
     }
 
@@ -312,32 +287,68 @@ public class CliApplication {
           remoteBranches.addAll(deletedBranchNames);
         }
 
-        for (String remoteBranch : remoteBranches) {
-          boolean usedAsUpstream = remoteBranchesUsedAsUpstream.containsKey(remoteName)
-              && remoteBranchesUsedAsUpstream.get(remoteName).contains(remoteBranch);
 
-          if (usedAsUpstream) {
-            continue;
-          }
+      }
+    }
+    private boolean printDetails(Map<String, List<String>> added,Map<String, List<String>> deleted,Map<String, Worker.Stats> stats ){
+     boolean details = !added.isEmpty()
+            || !deleted.isEmpty()
+            || !stats.values().stream().map(Worker.Stats::isEmpty).reduce(true, (a, b) -> a && b);
+      return details;
+    }
+    private void remoteBranchLocator(Set<String> remoteBranches){
+      for (String remoteBranch : remoteBranches) {
+        boolean usedAsUpstream = remoteBranchesUsedAsUpstream.containsKey(remoteName)
+                && remoteBranchesUsedAsUpstream.get(remoteName).contains(remoteBranch);
 
-          output
-              .print("   ")
-              .print(Color.DARK_GRAY, pattern, remoteName + "/" + remoteBranch);
-
-          boolean wasAdded = null != addedBranchNames
-              && addedBranchNames.contains(remoteBranch);
-
-          boolean wasDeleted = null != deletedBranchNames
-              && deletedBranchNames.contains(remoteBranch);
-
-          if (wasAdded) {
-            output.print(Color.GREEN, " (added)");
-          } else if (wasDeleted) {
-            output.print(Color.RED, " (removed)");
-          }
-
-          output.println();
+        if (usedAsUpstream) {
+          continue;
         }
+
+        output
+                .print("   ")
+                .print(Color.DARK_GRAY, pattern, remoteName + "/" + remoteBranch);
+
+        boolean wasAdded = null != addedBranchNames
+                && addedBranchNames.contains(remoteBranch);
+
+        boolean wasDeleted = null != deletedBranchNames
+                && deletedBranchNames.contains(remoteBranch);
+
+        if (wasAdded) {
+          output.print(Color.GREEN, " (added)");
+        } else if (wasDeleted) {
+          output.print(Color.RED, " (removed)");
+        }
+
+        output.println();
+      }
+
+    }
+    private void extraChecks(Worker.Stats stats){
+      if (stats.getModified() > 0) {
+        output.print(Color.YELLOW, "  ★");
+        output.print(Color.YELLOW, stats.getModified());
+      }
+
+      if (stats.getRenamed() > 0) {
+        output.print(Color.MAGENTA, "  ⇄");
+        output.print(Color.MAGENTA, stats.getRenamed());
+      }
+
+      if (stats.getCopied() > 0) {
+        output.print(Color.MAGENTA, "  ↷");
+        output.print(Color.MAGENTA, stats.getCopied());
+      }
+
+      if (stats.getDeleted() > 0) {
+        output.print(Color.MAGENTA, "  -");
+        output.print(Color.MAGENTA, stats.getDeleted());
+      }
+
+      if (stats.getUnmerged() > 0) {
+        output.print(Color.RED, "  ☠");
+        output.print(Color.RED, stats.getUnmerged());
       }
     }
   }
