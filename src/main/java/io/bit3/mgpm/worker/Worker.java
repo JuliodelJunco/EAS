@@ -111,11 +111,11 @@ public class Worker implements Runnable {
   public boolean isSucceed() {
     return succeed;
   }
-  public final String local = "--local";
-  public final String configuration = "config";
-  public final String get = "--get";
-  public final String submodule = "submodule";
-  public final String rev = "rev-parse";
+  public static final String local = "--local";
+  public static final String configuration = "config";
+  public static final String get = "--get";
+  public static final String submodule = "submodule";
+  public static final String rev = "rev-parse";
 
 
   @Override
@@ -152,7 +152,7 @@ public class Worker implements Runnable {
   /**
    * Clone or reconfigure the repository if necessary.
    */
-  private boolean cloneOrReconfigureRepository() throws WorkerException, GitProcessException {
+  private boolean cloneOrReconfigureRepository() throws WorkerException, GitProcessException, IOException, InterruptedException {
     File directory = repositoryConfig.getDirectory();
 
     if (directory.exists()) {
@@ -215,14 +215,22 @@ public class Worker implements Runnable {
       } catch (GitProcessException e2) {
         // this is an empty repository without a HEAD
         headSymbolicRef = headCommitRef =null;
+      } catch (IOException ex) {
+          throw new RuntimeException(ex);
+      } catch (InterruptedException ex) {
+          throw new RuntimeException(ex);
       }
+    } catch (IOException e) {
+        throw new RuntimeException(e);
+    } catch (InterruptedException e) {
+        throw new RuntimeException(e);
     }
   }
 
   /**
    * Stash changes, if necessary.
    */
-  private void stashChanges() throws GitProcessException {
+  private void stashChanges() throws GitProcessException, IOException, InterruptedException {
     if (StringUtils.isEmpty(git("status", "--porcelain", "--ignore-submodules"))) {
       return;
     }
@@ -235,7 +243,7 @@ public class Worker implements Runnable {
   /**
    * Unstash changes, if necessary.
    */
-  private void unstashChanges() throws GitProcessException {
+  private void unstashChanges() throws GitProcessException, IOException, InterruptedException {
     if (!hasStashed) {
       return;
     }
@@ -244,7 +252,7 @@ public class Worker implements Runnable {
     git("stash", "pop");
   }
 
-  private void determineRemoteBranches(Map<String, List<String>> remoteBranchNames) throws GitProcessException {
+  private void determineRemoteBranches(Map<String, List<String>> remoteBranchNames) throws GitProcessException, IOException, InterruptedException {
     activity(Action.PARSE_REMOTE_BRANCHES, "parse remote branches");
     remoteBranchNames.putAll(parseRemoteBranches(git("branch", "-r")));
   }
@@ -289,7 +297,7 @@ public class Worker implements Runnable {
   /**
    * Determine local and remote branches and upstreams.
    */
-  private void determineLocalBranchesAndUpstreams() throws GitProcessException {
+  private void determineLocalBranchesAndUpstreams() throws GitProcessException, IOException, InterruptedException {
     activity(Action.PARSE_LOCAL_BRANCHES, "parse local branches");
     localBranchNames.addAll(parseLocalBranches(git("branch")));
 
@@ -343,7 +351,7 @@ public class Worker implements Runnable {
   /**
    * Fetch all tracked remotes.
    */
-  private void fetchRemotes() throws GitProcessException {
+  private void fetchRemotes() throws GitProcessException, IOException, InterruptedException {
     activity(Action.FETCH_REMOTES, "fetch remotes {}", String.join(", ", remoteNames));
 
     List<String> command = new LinkedList<>(Arrays.asList("fetch", "--prune", "--multiple"));
@@ -351,13 +359,13 @@ public class Worker implements Runnable {
     git(command);
   }
 
-  private void determineStats() throws GitProcessException {
+  private void determineStats() throws GitProcessException, IOException, InterruptedException {
     for (String branchName : localBranchNames) {
       determineStats(branchName);
     }
   }
 
-  private void determineStats(String branchName) throws GitProcessException {
+  private void determineStats(String branchName) throws GitProcessException, IOException, InterruptedException {
     Upstream upstream = branchUpstreamMap.get(branchName);
 
     if (!determineUpstreamIsAvailable(upstream)) {
@@ -400,8 +408,6 @@ public class Worker implements Runnable {
     Object lock = new Object();
     synchronized (lock) {
       switch (status) {
-        default:
-          break;
         case 'M':
           stats.modified++;
           break;
@@ -425,6 +431,9 @@ public class Worker implements Runnable {
         case 'U':
           stats.unmerged++;
           break;
+
+        default:
+          break;
       }
     }
   }
@@ -432,7 +441,7 @@ public class Worker implements Runnable {
   /**
    * Update all branches.
    */
-  private void updateBranches() throws GitProcessException {
+  private void updateBranches() throws GitProcessException, IOException, InterruptedException {
     if (!updateExisting) {
       return;
     }
@@ -442,7 +451,7 @@ public class Worker implements Runnable {
     }
   }
 
-  private void updateBranch(String branchName) throws GitProcessException {
+  private void updateBranch(String branchName) throws GitProcessException, IOException, InterruptedException {
     if (!updateExisting) {
       return;
     }
@@ -516,7 +525,7 @@ public class Worker implements Runnable {
   /**
    * Restore original HEAD state.
    */
-  private void restoreHead() throws GitProcessException {
+  private void restoreHead() throws GitProcessException, IOException, InterruptedException {
     if (null == headSymbolicRef) {
       return;
     }
@@ -543,26 +552,27 @@ public class Worker implements Runnable {
     }
   }
 
-  private String git(List<String> arguments) throws GitProcessException {
+  private String git(List<String> arguments) throws GitProcessException, IOException, InterruptedException {
+      return gitString(arguments);
+  }
+
+  private String git(String... arguments) throws GitProcessException, IOException, InterruptedException {
     return git(repositoryConfig.getDirectory(), arguments);
   }
 
-  private String git(String... arguments) throws GitProcessException {
-    return git(repositoryConfig.getDirectory(), arguments);
-  }
-
-  private String git(File directory, List<String> arguments) throws GitProcessException {
+  private String gitString(List<String> arguments) throws GitProcessException, IOException, InterruptedException {
     return git(arguments.toArray(new String[arguments.size()]));
   }
 
-  private String git(File directory, String... arguments) throws GitProcessException {
+  private String git(File directory, String... arguments) throws GitProcessException, IOException, InterruptedException {
     List<String> command = new LinkedList<>();
     command.add(config.getGitConfig().getBinary());
     command.addAll(Arrays.asList(arguments));
 
-    logger.debug("[{}] > {}", directory, String.join(" ", command));
+    if (logger.isDebugEnabled()) {
+      logger.debug("[{}] > {}", directory, String.join(" ", command));
+    }
 
-    try {
       Process process = new ProcessBuilder()
           .directory(directory)
           .command(command)
@@ -589,9 +599,6 @@ public class Worker implements Runnable {
       }
 
       return IOUtils.toString(process.getInputStream()).replaceAll("\\s+$", "");
-    } catch (IOException | InterruptedException e) {
-      throw new GitProcessException(e);
-    }
   }
 
   private List<String> parseLocalBranches(String gitOutput) {

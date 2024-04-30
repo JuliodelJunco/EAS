@@ -18,14 +18,14 @@ public class App {
   private final Args args;
   private final Config config = new Config();
 
-  public App(ConfigLoader loader, Args args) throws FileNotFoundException {
+  public App(ConfigLoader loader, Args args) throws FileNotFoundException, InterruptedException {
     this.loader = loader;
     this.args = args;
 
     this.init();
   }
 
-  public static void main(String[] cliArguments) {
+  public static void main(String[] cliArguments) throws InterruptedException {
     System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", LogLevel.TRACE.toString().toLowerCase());
 
     ArgsLoader argsLoader = new ArgsLoader();
@@ -49,12 +49,10 @@ public class App {
       }
     } catch (FileNotFoundException e) {
       logger.error(e.getMessage()); // Utilizando el Logger para errores de archivo no encontrado
-    } catch (InterruptedException e) {
-      logger.error(e.getMessage(), e); // Utilizando el Logger para excepciones generales
     }
   }
 
-  public void init() throws FileNotFoundException {
+  public void init() throws FileNotFoundException, InterruptedException {
     AnsiOutput output = AnsiOutput.getInstance();
     output.addActiveWorker("MGPM", "loading configuration");
     SpinnerRotator rotator = new SpinnerRotator(output);
@@ -95,23 +93,19 @@ public class App {
     public void run() {
       while (running) {
         output.rotateSpinner();
-        try {
-          Thread.sleep(200);
-        } catch (InterruptedException e) {
-          logger.error(e.getMessage(), e); // Utilizando el Logger para excepciones en el hilo del spinner
-        }
+          try {
+              Thread.sleep(200);
+          } catch (InterruptedException e) {
+              throw new RuntimeException(e);
+          }
       }
     }
 
-    public void finish() {
+    public void finish() throws InterruptedException {
       running = false;
 
       while (isAlive()) {
-        try {
           Thread.sleep(50);
-        } catch (InterruptedException e) {
-          logger.error(e.getMessage(), e); // Utilizando el Logger para excepciones en la finalización del hilo del spinner
-        }
       }
 
       output.deleteSpinner();
