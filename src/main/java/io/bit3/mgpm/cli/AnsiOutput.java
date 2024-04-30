@@ -1,11 +1,16 @@
 package io.bit3.mgpm.cli;
 
+import org.slf4j.LoggerFactory;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.logging.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
+
+
 
 public class AnsiOutput {
-  private static final Logger LOGGER = Logger.getLogger(AnsiOutput.class.getName());
+  private static final Logger LOGGER = LoggerFactory.getLogger(AnsiOutput.class);
   private static final char ESCAPE = '\u001b';
   private static final boolean DECORATED;
   private static final AnsiOutput instance;
