@@ -111,11 +111,11 @@ public class Worker implements Runnable {
   public boolean isSucceed() {
     return succeed;
   }
-  public static final String local = "--local";
-  public static final String configuration = "config";
-  public static final String get = "--get";
-  public static final String submodule = "submodule";
-  public static final String rev = "rev-parse";
+  public static final String LOCAL = "--local";
+  public static final String CONFIG = "config";
+  public static final String GET = "--get";
+  public static final String SUBMODULE = "submodule";
+  public static final String REV_PARSE = "rev-parse";
 
 
   @Override
@@ -161,7 +161,7 @@ public class Worker implements Runnable {
       }
 
       if (new File(directory, ".git").isDirectory()) {
-        String actualUrl = git(configuration, local, get, "remote.origin.url");
+        String actualUrl = git(CONFIG, LOCAL, GET, "remote.origin.url");
         String expectedUrl = repositoryConfig.getUrl();
 
         if (!expectedUrl.equals(actualUrl)) {
@@ -195,8 +195,8 @@ public class Worker implements Runnable {
     }
 
     git(directory.getParentFile(), "clone", repositoryConfig.getUrl(), directory.toString());
-    git(submodule, "init");
-    git(submodule, "update");
+    git(SUBMODULE, "init");
+    git(SUBMODULE, "update");
 
     updateExisting = false;
     return true;
@@ -208,10 +208,10 @@ public class Worker implements Runnable {
   private void determineHead() throws GitProcessException {
     try {
       headSymbolicRef = git("symbolic-ref", "HEAD", "--short");
-      headCommitRef = git(rev, headSymbolicRef);
+      headCommitRef = git(REV_PARSE, headSymbolicRef);
     } catch (GitProcessException e) {
       try {
-        headSymbolicRef = headCommitRef = git(rev, "HEAD");
+        headSymbolicRef = headCommitRef = git(REV_PARSE, "HEAD");
       } catch (GitProcessException e2) {
         // this is an empty repository without a HEAD
         headSymbolicRef = headCommitRef =null;
@@ -308,23 +308,23 @@ public class Worker implements Runnable {
       String rebase = null;
 
       try {
-        remoteName = git(configuration, local, get, String.format("branch.%s.remote", branchName));
+        remoteName = git(CONFIG, LOCAL, GET, String.format("branch.%s.remote", branchName));
       } catch (GitProcessException e) {
         // exception means, there is no remote configured
       }
 
       try {
-        remoteRef = git(configuration, local, get, String.format("branch.%s.merge", branchName));
+        remoteRef = git(CONFIG, LOCAL, GET, String.format("branch.%s.merge", branchName));
       } catch (GitProcessException e) {
         // exception means, there is no remote configured
       }
 
       try {
-        rebase = git(configuration, local, get, String.format("branch.%s.rebase", branchName)).toLowerCase();
+        rebase = git(CONFIG, LOCAL, GET, String.format("branch.%s.rebase", branchName)).toLowerCase();
 
         if (StringUtils.isBlank(rebase)) {
           // not defined for this branch, use global setting instead
-          rebase = git(configuration, get, "pull.rebase");
+          rebase = git(CONFIG, GET, "pull.rebase");
         }
       } catch (GitProcessException e) {
         // exception means, there is no remote configured
@@ -374,8 +374,8 @@ public class Worker implements Runnable {
 
     Stats stats = new Stats();
 
-    String localRef = git(rev, branchName);
-    String remoteRef = git(rev, upstream.getRemoteRef());
+    String localRef = git(REV_PARSE, branchName);
+    String remoteRef = git(REV_PARSE, upstream.getRemoteRef());
 
     stats.commitsBehind = Integer.parseInt(
         git("rev-list", "--count", String.format("%s..%s", localRef, remoteRef))
@@ -471,8 +471,8 @@ public class Worker implements Runnable {
     activity(Action.CHECKOUT, "checkout branch {}", branchName);
     git("checkout", branchName);
 
-    String fromIsh = git(rev, branchName);
-    String toIsh = git(rev, upstream.getRemoteRef());
+    String fromIsh = git(REV_PARSE, branchName);
+    String toIsh = git(REV_PARSE, upstream.getRemoteRef());
 
     if (StringUtils.equals(fromIsh, toIsh)) {
       branchUpdateStatus.put(branchName, Update.UP_TO_DATE);
@@ -507,8 +507,8 @@ public class Worker implements Runnable {
 
     if (new File(repositoryConfig.getDirectory(), ".gitmodules").isFile()) {
       activity(Action.UPDATE_SUBMODULES, "update submodules");
-      git(submodule, "sync");
-      git(submodule, "update");
+      git(SUBMODULE, "sync");
+      git(SUBMODULE, "update");
     }
   }
 
