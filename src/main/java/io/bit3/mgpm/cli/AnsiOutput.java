@@ -135,19 +135,13 @@ public class AnsiOutput {
   }
 
   private void color(int code, int intensity) {
-    if (!DECORATED) {
-      return;
-    }
-    else if(LOGGER.isInfoEnabled()){
+    if(DECORATED && LOGGER.isInfoEnabled()){
     LOGGER.info(String.format("%c[%d;%dm", ESCAPE, intensity, code));
     }
   }
 
   private void reset() {
-    if (!DECORATED) {
-      return;
-    }
-    else if(LOGGER.isInfoEnabled()){
+    if(DECORATED && LOGGER.isInfoEnabled()){
       LOGGER.info(String.format("%c[0m", ESCAPE));
     }
   }
