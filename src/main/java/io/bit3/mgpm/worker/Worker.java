@@ -14,6 +14,13 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+public class CustomGitException extends GitProcessException {
+  public MyParseException(String message) {
+    super(message);
+  }
+}
+
+
 public class Worker implements Runnable {
   private final Logger logger = LoggerFactory.getLogger(Worker.class);
   private final List<WorkerObserver> observers = new LinkedList<>();
@@ -208,22 +215,17 @@ public class Worker implements Runnable {
   private void determineHead() throws GitProcessException {
     try {
       headSymbolicRef = git("symbolic-ref", "HEAD", "--short");
-      headCommitRef = git(REV_PARSE, headSymbolicRef);
+      headCommitRef = git("rev-parse", headSymbolicRef);
     } catch (GitProcessException e) {
       try {
-        headSymbolicRef = headCommitRef = git(REV_PARSE, "HEAD");
+        headSymbolicRef = headCommitRef = git("rev-parse", "HEAD");
       } catch (GitProcessException e2) {
         // this is an empty repository without a HEAD
+
         headSymbolicRef = headCommitRef =null;
-      } catch (IOException ex) {
-          throw new RuntimeException(ex);
-      } catch (InterruptedException ex) {
-          throw new RuntimeException(ex);
+        throw new CustomGitException("Error con el proceso de GIT",e)
       }
-    } catch (IOException e) {
-        throw new RuntimeException(e);
-    } catch (InterruptedException e) {
-        throw new RuntimeException(e);
+      throw new CustomGitException("Error con el proceso de GIT",e)
     }
   }
 

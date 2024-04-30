@@ -12,6 +12,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.io.FileNotFoundException;
 
+
+
+public class InterruptedNewException extends RuntimeException {
+  public MyParseException(String message) {
+    super(message);
+  }
+}
 public class App {
   private static final Logger logger = LoggerFactory.getLogger(App.class);
   private final ConfigLoader loader;
@@ -96,7 +103,7 @@ public class App {
           try {
               Thread.sleep(200);
           } catch (InterruptedException e) {
-              throw new RuntimeException(e);
+              throw new InterruptedNewException("Error wtih the time wait limit, process was interupted",e);
           }
       }
     }
