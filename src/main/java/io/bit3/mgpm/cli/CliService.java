@@ -28,10 +28,9 @@ public class CliService {
             }
             cliAux.setRemoteBranches(remoteBranches);
             cliAux.setRemoteBranchesUsedAsUpstream(remoteBranchesUsedAsUpstream);
-            ;
-            if (cliAux!=null){
-                return cliAux;
-            }
+
+            return cliAux;
+
         }
         return null;
     }
