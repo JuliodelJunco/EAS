@@ -2,15 +2,12 @@ package io.bit3.mgpm.cli;
 
 import io.bit3.mgpm.worker.Worker;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 public class CliService {
 
-    public CliAux printRemoteBranches(Map<String, List<String>> remoteBranchNames, Map<String, List<String>> addedRemoteBranchNames, Map<String, List<String>> deletedRemoteBranchNames, Map<String, List<String>> remoteBranchesUsedAsUpstream) {
-
+    public List<CliAux> printRemoteBranches(Map<String, List<String>> remoteBranchNames, Map<String, List<String>> addedRemoteBranchNames, Map<String, List<String>> deletedRemoteBranchNames, Map<String, List<String>> remoteBranchesUsedAsUpstream) {
+        List<CliAux> cliAuxList = new LinkedList<>();
         for (Map.Entry<String, List<String>> entry : remoteBranchNames.entrySet()) {
             CliAux cliAux = new CliAux();
             cliAux.setRemoteName(entry.getKey());
@@ -29,10 +26,10 @@ public class CliService {
             cliAux.setRemoteBranches(remoteBranches);
             cliAux.setRemoteBranchesUsedAsUpstream(remoteBranchesUsedAsUpstream);
 
-            return cliAux;
+            cliAuxList.add(cliAux);
 
         }
-        return null;
+        return cliAuxList;
     }
     public boolean printDetails(Map<String, List<String>> added,Map<String, List<String>> deleted,Map<String, Worker.Stats> stats ){
 

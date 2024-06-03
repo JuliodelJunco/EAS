@@ -275,8 +275,8 @@ public class CliApplication {
     }
 
     private void remoteBranchLocator(Map<String, List<String>> remoteBranchNames, Map<String, List<String>> addedRemoteBranchNames, Map<String, List<String>> deletedRemoteBranchNames, Map<String, List<String>> remoteBranchesUsedAsUpstream){
-      CliAux cliAux = cliService.printRemoteBranches(remoteBranchNames,addedRemoteBranchNames,deletedRemoteBranchNames,remoteBranchesUsedAsUpstream);
-      if (cliAux != null) {
+      List<CliAux> cliAuxList = cliService.printRemoteBranches(remoteBranchNames,addedRemoteBranchNames,deletedRemoteBranchNames,remoteBranchesUsedAsUpstream);
+      for (CliAux cliAux :cliAuxList) {
         Set<String> remoteBranches = cliAux.getRemoteBranches();
         String remoteName = cliAux.getRemoteName();
         List<String> addedBranchNames = cliAux.getAddedBranchNames();
