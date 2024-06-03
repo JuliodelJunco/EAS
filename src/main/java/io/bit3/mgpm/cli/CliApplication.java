@@ -34,10 +34,13 @@ public class CliApplication {
   private final Config config;
   private final AnsiOutput output;
 
+  private final CliService cliService;
+
   public CliApplication(Args args, Config config) {
     this.args = args;
     this.config = config;
-    this.output = AnsiOutput.getInstance();
+      this.cliService = new CliService();
+      this.output = AnsiOutput.getInstance();
   }
 
   public void run() throws InterruptedException {
@@ -145,7 +148,7 @@ public class CliApplication {
         }
 
         synchronized (output) {
-          if (!printDetails(addedRemoteBranchNames, deletedRemoteBranchNames, branchStats)) {
+          if (!cliService.printDetails(addedRemoteBranchNames, deletedRemoteBranchNames, branchStats)) {
             return;
           }
 
@@ -182,7 +185,7 @@ public class CliApplication {
           }
 
           if (args.isShowStatus()) {
-            printRemoteBranches(pattern, remoteBranchNames, addedRemoteBranchNames, deletedRemoteBranchNames, remoteBranchesUsedAsUpstream);
+            remoteBranchLocator( remoteBranchNames, addedRemoteBranchNames, deletedRemoteBranchNames, remoteBranchesUsedAsUpstream);
           }
 
           output.println();
@@ -271,59 +274,40 @@ public class CliApplication {
       }
     }
 
-    private void printRemoteBranches( Map<String, List<String>> remoteBranchNames, Map<String, List<String>> addedRemoteBranchNames, Map<String, List<String>> deletedRemoteBranchNames, Map<String) {
-      for (Map.Entry<String, List<String>> entry : remoteBranchNames.entrySet()) {
-        String remoteName = entry.getKey();
-        List<String> currentBranchNames = entry.getValue();
-        List<String> addedBranchNames = addedRemoteBranchNames.get(remoteName);
-        List<String> deletedBranchNames = deletedRemoteBranchNames.get(remoteName);
+    private void remoteBranchLocator(Map<String, List<String>> remoteBranchNames, Map<String, List<String>> addedRemoteBranchNames, Map<String, List<String>> deletedRemoteBranchNames, Map<String, List<String>> remoteBranchesUsedAsUpstream){
+      CliAux cliAux = cliService.printRemoteBranches(remoteBranchNames,addedRemoteBranchNames,deletedRemoteBranchNames,remoteBranchesUsedAsUpstream);
+      if (cliAux != null) {
+        Set<String> remoteBranches = cliAux.getRemoteBranches();
+        String remoteName = cliAux.getRemoteName();
+        List<String> addedBranchNames = cliAux.getAddedBranchNames();
+        List<String> deletedBranchNames = cliAux.getDeletedBranchNames();
+        for (String remoteBranch : remoteBranches) {
+          boolean usedAsUpstream = remoteBranchesUsedAsUpstream.containsKey(remoteName)
+                  && remoteBranchesUsedAsUpstream.get(remoteName).contains(remoteBranch);
 
-        Set<String> remoteBranches = new TreeSet<>();
-        remoteBranches.addAll(currentBranchNames);
-        if (null != addedBranchNames) {
-          remoteBranches.addAll(addedBranchNames);
-        }
-        if (null != deletedBranchNames) {
-          remoteBranches.addAll(deletedBranchNames);
-        }
-        remoteBranchLocator(remoteBranches);
+          if (usedAsUpstream) {
+            continue;
+          }
 
+          output
+                  .print("   ")
+                  .print(Color.DARK_GRAY, remoteName + "/" + remoteBranch);
+
+          boolean wasAdded = null != addedBranchNames
+                  && addedBranchNames.contains(remoteBranch);
+
+          boolean wasDeleted = null != deletedBranchNames
+                  && deletedBranchNames.contains(remoteBranch);
+
+          if (wasAdded) {
+            output.print(Color.GREEN, " (added)");
+          } else if (wasDeleted) {
+            output.print(Color.RED, " (removed)");
+          }
+
+          output.println();
+        }
       }
-    }
-    private boolean printDetails(Map<String, List<String>> added,Map<String, List<String>> deleted,Map<String, Worker.Stats> stats ){
-
-      return !added.isEmpty()
-              || !deleted.isEmpty()
-              || !stats.values().stream().map(Worker.Stats::isEmpty).reduce(true, (a, b) -> a && b);
-    }
-    private void remoteBranchLocator(Set<String> remoteBranches){
-      for (String remoteBranch : remoteBranches) {
-        boolean usedAsUpstream = remoteBranchesUsedAsUpstream.containsKey(remoteName)
-                && remoteBranchesUsedAsUpstream.get(remoteName).contains(remoteBranch);
-
-        if (usedAsUpstream) {
-          continue;
-        }
-
-        output
-                .print("   ")
-                .print(Color.DARK_GRAY, pattern, remoteName + "/" + remoteBranch);
-
-        boolean wasAdded = null != addedBranchNames
-                && addedBranchNames.contains(remoteBranch);
-
-        boolean wasDeleted = null != deletedBranchNames
-                && deletedBranchNames.contains(remoteBranch);
-
-        if (wasAdded) {
-          output.print(Color.GREEN, " (added)");
-        } else if (wasDeleted) {
-          output.print(Color.RED, " (removed)");
-        }
-
-        output.println();
-      }
-
     }
     private void extraChecks(Worker.Stats stats){
       if (stats.getModified() > 0) {
